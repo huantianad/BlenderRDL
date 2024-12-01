@@ -5,6 +5,7 @@ import random
 import shelve
 import urllib.parse
 from dataclasses import dataclass
+from traceback import format_exception
 from typing import Any
 
 import aiohttp
@@ -183,10 +184,16 @@ async def get_blend():
 
     # Otherwise, blend a random level
     levels = open("random.txt").read().splitlines()
-    await blend_level(levels.pop(random.randrange(len(levels))))
-    with open("random.txt", "w") as f:
-        for level in levels:
-            f.write(f"{level}\n")
+    random_level = levels.pop(random.randrange(len(levels)))
+    try:
+        await blend_level(random_level)
+    except Exception as e:
+        await client.pharmacy.send(f"I broke trying to blend {random_level} :(")
+        await client.pharmacy.send(format_exception(e))
+    else:
+        with open("random.txt", "w") as f:
+            for level in levels:
+                f.write(f"{level}\n")
 
 
 def parse_level_id(level_url: str) -> str:
